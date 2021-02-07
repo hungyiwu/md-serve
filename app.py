@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_restful import Resource, Api
 
 import numpy as np
@@ -18,6 +18,10 @@ class Coord(Resource):
         return out.tolist()
 
 api.add_resource(Coord, "/coord/<string:fraction>")
+
+@app.route("/index")
+def index():
+    return render_template("index.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
