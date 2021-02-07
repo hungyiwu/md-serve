@@ -24,10 +24,12 @@
     <!-- End CSS (Styling) -->
  
   <body>
-    <h2>D3 Scatterplot </h2>
-    <p>This is a data visualization using transitions with a scatterplot</p>
-    <h4 id="frac0">frac0</h4>
-    <h4 id="frac6">frac6</h4>
+    <h2>Mixed-distance scatter plot</h2>
+    <div>
+	    <p>Fractional weight of physical distance</p>
+	    <input type="range" id="slider" min="0.0" max="0.6" step="0.6" value="0.0">
+	    <label id="slider-label" for="slider">0.0</label>
+    </div>
     <svg id="canvas" height=300 width=500></svg>
   
   <!-- Begin D3 Javascript -->
@@ -158,17 +160,13 @@
 	    }
 
 
-            // On click, update with new data
-            d3.select("#frac0")
-                .on("click", function() {
-			dataset = fetchData("0.0");
-			updateChart(svg, dataset);
-		});
-            d3.select("#frac6")
-                .on("click", function() {
-			dataset = fetchData("0.6");
-			updateChart(svg, dataset);
-		});
+    d3.select("#slider").on("input", function () {
+	    var current_value = parseFloat(this.value).toFixed(1);
+	    d3.select("#slider-label").text(current_value);
+	    dataset = fetchData(current_value);
+	    updateChart(svg, dataset);
+    });
+			
  
   </script>
   </body>
