@@ -14,8 +14,15 @@ label = np.load("label.npy").reshape((-1,1))
 class Coord(Resource):
     def get(self, fraction: str):
         c = data.get(fraction)
-        out = np.concatenate([c, label], axis=1)
-        return out.tolist()
+        out = [{
+            "x": float(c[i, 0]),
+            "y": float(c[i, 1]),
+            "label": int(label[i]),
+            }
+            for i in range(c.shape[0])]
+        return out
+#        out = np.concatenate([c, label], axis=1)
+#        return out.tolist()
 
 api.add_resource(Coord, "/coord/<string:fraction>")
 

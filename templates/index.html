@@ -49,16 +49,12 @@
 
             // Create scale functions
             var xScale = d3.scale.linear()  // xScale is width of graphic
-                            .domain([0, d3.max(dataset, function(d) {
-                                return d[0];  // input domain
-                            })])
-                            .range([padding, canvas_width - padding * 2]); // output range
+			.domain([0, d3.max(dataset, pt => pt.x)])
+                        .range([padding, canvas_width - padding * 2]); // output range
 
             var yScale = d3.scale.linear()  // yScale is height of graphic
-                            .domain([0, d3.max(dataset, function(d) {
-                                return d[1];  // input domain
-                            })])
-                            .range([canvas_height - padding, padding]);  // remember y starts on top going down so we flip
+			.domain([0, d3.max(dataset, pt => pt.y)])
+                        .range([canvas_height - padding, padding]);  // remember y starts on top going down so we flip
 
             // Define X axis
             var xAxis = d3.svg.axis()
@@ -80,12 +76,8 @@
                 .data(dataset)
                 .enter()
                 .append("circle")  // Add circle svg
-                .attr("cx", function(d) {
-                    return xScale(d[0]);  // Circle's X
-                })
-                .attr("cy", function(d) {  // Circle's Y
-                    return yScale(d[1]);
-                })
+		.attr("cx", d => xScale(d.x))
+		.attr("cy", d => yScale(d.y))
                 .attr("r", 2);  // radius
 
             // Add to X axis
@@ -103,10 +95,8 @@
 
 	    function updateChart(svg, data) {
                     // Update scale domains
-                    xScale.domain([0, d3.max(data, function(d) {
-                        return d[0]; })]);
-                    yScale.domain([0, d3.max(data, function(d) {
-                        return d[1]; })]);
+		    xScale.domain([0, d3.max(data, d => d.x)]);
+		    yScale.domain([0, d3.max(data, d => d.y)]);
 
                     // Update circles
                     svg.selectAll("circle")
@@ -122,12 +112,8 @@
                             return i / dataset.length * 500;  // Dynamic delay (i.e. each item delays a little longer)
                         })
                         //.ease("linear")  // Transition easing - default 'variable' (i.e. has acceleration), also: 'circle', 'elastic', 'bounce', 'linear'
-                        .attr("cx", function(d) {
-                            return xScale(d[0]);  // Circle's X
-                        })
-                        .attr("cy", function(d) {
-                            return yScale(d[1]);  // Circle's Y
-                        })
+			.attr("cx", d => xScale(d.x))
+			.attr("cy", d => yScale(d.y))
                         .each("end", function() {  // End animation
                             d3.select(this)  // 'this' means the current element
                                 .transition()
