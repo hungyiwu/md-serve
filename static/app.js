@@ -23,7 +23,11 @@ function drawChart(svg, data, update) {
 	}
 	sel.attr("cx", d => xScaler(d.x))
 		.attr("cy", d => yScaler(d.y))
-		.attr("r", 2);
+		.attr("r", 2)
+		.attr("fill", function (d) {
+			if (d.label == 1) {return "red"}
+			else {return "black"}
+		});
 
 	// draw/update axis
 	if (update) {
