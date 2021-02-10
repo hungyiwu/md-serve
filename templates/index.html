@@ -1,173 +1,32 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <!-- Load D3 from site -->
-    <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-  </head>
- 
-    <!-- CSS (Styling) -->
-    <style type="text/css">
-            /* Format X and Y Axis */
-            .axis path,
-            .axis line {
-                fill: none;
-                stroke: black;
-                shape-rendering: crispEdges;
-            }
+	<head>
+		<script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+		<script src="{{ url_for('static', filename='app.js') }}"></script>
+	</head>
 
-            .axis text {
-                font-family: sans-serif;
-                font-size: 11px;
-            }
-    </style>
-    <!-- End CSS (Styling) -->
- 
-  <body>
-    <h2>Mixed-distance scatter plot</h2>
-    <div>
-	    <p>Fractional weight of physical distance</p>
-	    <input type="range" id="slider" min="0.0" max="0.6" step="0.6" value="0.0">
-	    <label id="slider-label" for="slider">0.0</label>
-    </div>
-    <svg id="canvas" height=300 width=500></svg>
-  
-  <!-- Begin D3 Javascript -->
-  <script type="text/javascript">
-	  // fetch data
-	  var dataset = $.ajax({
-		  url: "http://localhost:5000/api/v1/coord/0.0",
-		  async: false,
-		  dataType: "json",
-	  }).responseJSON;
-  
+	<body>
+		<h2>Mixed-distance scatter plot</h2>
+		<div>
+			<p>Fractional weight of physical distance</p>
+			<input type="range" id="slider" min="0.0" max="0.6" step="0.6" value="0.0">
+			<label id="slider-label" for="slider">0.0</label>
+		</div>
 
-            // Setup settings for graphic
-            var canvas_width = 500;
-            var canvas_height = 300;
-            var padding = 30;  // for chart edges
+		<svg id="canvas" height=300 width=500></svg>
 
-            // Create scale functions
-            var xScale = d3.scale.linear()  // xScale is width of graphic
-                            .domain([0, d3.max(dataset, function(d) {
-                                return d[0];  // input domain
-                            })])
-                            .range([padding, canvas_width - padding * 2]); // output range
+		<script>
+			d3.json("/api/v1/coord/0.0").then(function (data) {
+				drawChart(d3.select("#canvas"), data, false);
+			});
 
-            var yScale = d3.scale.linear()  // yScale is height of graphic
-                            .domain([0, d3.max(dataset, function(d) {
-                                return d[1];  // input domain
-                            })])
-                            .range([canvas_height - padding, padding]);  // remember y starts on top going down so we flip
-
-            // Define X axis
-            var xAxis = d3.svg.axis()
-                            .scale(xScale)
-                            .orient("bottom")
-                            .ticks(5);
-
-            // Define Y axis
-            var yAxis = d3.svg.axis()
-                            .scale(yScale)
-                            .orient("left")
-                            .ticks(5);
-
-            // Create SVG element
-	    var svg = d3.select("#canvas")
-
-            // Create Circles
-            svg.selectAll("circle")
-                .data(dataset)
-                .enter()
-                .append("circle")  // Add circle svg
-                .attr("cx", function(d) {
-                    return xScale(d[0]);  // Circle's X
-                })
-                .attr("cy", function(d) {  // Circle's Y
-                    return yScale(d[1]);
-                })
-                .attr("r", 2);  // radius
-
-            // Add to X axis
-            svg.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + (canvas_height - padding) +")")
-                .call(xAxis);
-
-            // Add to Y axis
-            svg.append("g")
-                .attr("class", "y axis")
-                .attr("transform", "translate(" + padding +",0)")
-                .call(yAxis);
-            
-
-	    function updateChart(svg, data) {
-                    // Update scale domains
-                    xScale.domain([0, d3.max(data, function(d) {
-                        return d[0]; })]);
-                    yScale.domain([0, d3.max(data, function(d) {
-                        return d[1]; })]);
-
-                    // Update circles
-                    svg.selectAll("circle")
-                        .data(data)  // Update with new data
-                        .transition()  // Transition from old to new
-                        .duration(1000)  // Length of animation
-                        .each("start", function() {  // Start animation
-                            d3.select(this)  // 'this' means the current element
-                                .attr("fill", "red")  // Change color
-                                .attr("r", 5);  // Change size
-                        })
-                        .delay(function(d, i) {
-                            return i / dataset.length * 500;  // Dynamic delay (i.e. each item delays a little longer)
-                        })
-                        //.ease("linear")  // Transition easing - default 'variable' (i.e. has acceleration), also: 'circle', 'elastic', 'bounce', 'linear'
-                        .attr("cx", function(d) {
-                            return xScale(d[0]);  // Circle's X
-                        })
-                        .attr("cy", function(d) {
-                            return yScale(d[1]);  // Circle's Y
-                        })
-                        .each("end", function() {  // End animation
-                            d3.select(this)  // 'this' means the current element
-                                .transition()
-                                .duration(500)
-                                .attr("fill", "black")  // Change color
-                                .attr("r", 2);  // Change radius
-                        });
-
-                        // Update X Axis
-                        svg.select(".x.axis")
-                            .transition()
-                            .duration(1000)
-                            .call(xAxis);
-
-                        // Update Y Axis
-                        svg.select(".y.axis")
-                            .transition()
-                            .duration(100)
-                            .call(yAxis);
-
-	    }
-
-	    function fetchData(key) {
-		  var data = $.ajax({
-			  url: `http://localhost:5000/api/v1/coord/${key}`,
-			  async: false,
-			  dataType: "json",
-		  }).responseJSON;
-		    return data;
-	    }
-
-
-    d3.select("#slider").on("input", function () {
-	    var current_value = parseFloat(this.value).toFixed(1);
-	    d3.select("#slider-label").text(current_value);
-	    dataset = fetchData(current_value);
-	    updateChart(svg, dataset);
-    });
-			
- 
-  </script>
-  </body>
+			d3.select("#slider").on("input", function () {
+				var key = parseFloat(this.value).toFixed(1);
+				d3.select("#slider-label").text(this.value);
+				d3.json(`/api/v1/coord/${key}`).then(function (data) {
+					drawChart(d3.select("#canvas"), data, true);
+				});
+			});
+		</script>
+	</body>
 </html>
