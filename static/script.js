@@ -1,5 +1,5 @@
 var dataset = $.ajax({
-	url: "http://localhost:5000/api/v1/coord/0.0",
+	url: "/api/v1/coord/0.0",
 	async: false,
 	dataType: "json",
 }).responseJSON;
@@ -52,7 +52,7 @@ function updateChart(svg, data) {
 
 function fetchData(key) {
 	var data = $.ajax({
-		url: `http://localhost:5000/api/v1/coord/${key}`,
+		url: `/api/v1/coord/${key}`,
 		async: false,
 		dataType: "json",
 	}).responseJSON;
