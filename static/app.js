@@ -1,6 +1,6 @@
 function drawChart(svg, data, update) {
-	var padding = 30;
-	var timeSpan = 1000;
+	const padding = 30;
+	const timeSpan = 1000;
 	canvas_width = svg.style("width").replace("px", "");
 	canvas_height = svg.style("height").replace("px", "");
 

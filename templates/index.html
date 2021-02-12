@@ -6,26 +6,80 @@
 	</head>
 
 	<body>
-		<h2>Mixed-distance scatter plot</h2>
+        <div class="row">
+            <h2>Mixed-distance scatter plot</h2>
+        </div>
+        <div class="row">
+            <div class="column">
+                <label for="dropDown">Select WSI:</label>
+                <select id="dropDown"></select>
+            </div>
+            <div class="column">
+                <label>Fraction weight of physical distance</label>
+                <input type="range" id="slider">
+                <label id="sliderLabel" for="slider"></label>
+            </div>
+        </div>
 		<div>
-			<p>Fractional weight of physical distance</p>
-			<input type="range" id="slider" min="0.0" max="0.6" step="0.6" value="0.0">
-			<label id="slider-label" for="slider">0.0</label>
-		</div>
-
-		<svg id="canvas" height=300 width=500></svg>
+            <svg id="chart" height=300 width=500></svg>
+        </div>
 
 		<script>
-			d3.json("/api/v1/coord/0.0").then(function (data) {
-				drawChart(d3.select("#canvas"), data, false);
-			});
+            // create menu and populate with WSI id
+            // then set value to first WSI id
+            d3.json("/api/v1/wsi/list").then(
+                function (wsiList) {
+                    createDropDownMenu(wsiList);
+                    d3.json(`/api/v1/wsi/${wsiList[0]}/fraction/list`).then(
+                        function (fractionList) {
+                            createSlider(fractionList);
+                            d3.json(`/api/v1/wsi/${wsiList[0]}/fraction/${fractionList[0]}`).then(
+                                data => {drawChart(d3.select("#chart"), data, false);
+                        });
+                    });
+                });
 
+            function createDropDownMenu(wsiList) {
+                d3.select("#dropDown").selectAll("option")
+                    .data(wsiList)
+                    .enter()
+                    .append("option")
+                    .attr("value", d => d)
+                    .text(d => d)
+                    .attr("selected", function (d) {
+                            if (d == wsiList[0]) {return "selected"}});
+            }
+
+            function createSlider(fractionList) {
+                d3.select("#slider")
+                    .attr("min", "0.0")
+                    .attr("max", "1.0")
+                    .attr("step", "0.1")
+                    .attr("value", "0.0");
+                d3.select("#sliderLabel")
+                    .text("0.0");
+            }
+
+            // on changing WSI, prepare plot with same fraction if exists
+            d3.select("#dropDown").on("input", function () {
+                const wsiId = this.value;
+                const fraction = parseFloat(
+                    d3.select("#slider").node().value).toFixed(1);
+                d3.select("#chart").selectAll("circle").remove();
+                d3.select("#chart").selectAll("g").remove();
+                d3.json(`/api/v1/wsi/${wsiId}/fraction/${fraction}`).then(function (data) {
+                    drawChart(d3.select("#chart"), data, false);
+                });
+            });
+
+            // on changing fraction, prepare plot with same WSI
 			d3.select("#slider").on("input", function () {
-				var key = parseFloat(this.value).toFixed(1);
-				d3.select("#slider-label").text(this.value);
-				d3.json(`/api/v1/coord/${key}`).then(function (data) {
-					drawChart(d3.select("#canvas"), data, true);
-				});
+                const wsiId = d3.select("#dropDown").node().value;
+                const fraction = parseFloat(this.value).toFixed(1);
+				d3.select("#sliderLabel").text(fraction);
+                d3.json(`/api/v1/wsi/${wsiId}/fraction/${fraction}`).then(function (data) {
+                    drawChart(d3.select("#chart"), data, true);
+                });
 			});
 		</script>
 	</body>
