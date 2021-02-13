@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+	</head>
+
+	<body>
+        <div class="row">
+            <h2>Mixed-distance scatter plot</h2>
+        </div>
+        <div class="row">
+            <div class="column">
+                <label for="dropDown">Select WSI:</label>
+                <select id="dropDown"></select>
+            </div>
+            <div class="column">
+                <label>Fraction weight of physical distance</label>
+                <input type="range" id="slider">
+                <label id="sliderLabel" for="slider"></label>
+            </div>
+        </div>
+		<div>
+            <svg id="chart" height=300 width=500></svg>
+        </div>
+
+		<script>
+            function createDropDownMenu(wsiList) {
+                d3.select("#dropDown").selectAll("option")
+                    .data(wsiList)
+                    .enter()
+                    .append("option")
+                    .attr("value", d => d)
+                    .text(d => d)
+                    .attr("selected", function (d) {
+                            if (d == wsiList[0]) {return "selected"}});
+            }
+
+            function createSlider() {
+                d3.select("#slider")
+                    .attr("min", "0.0")
+                    .attr("max", "1.0")
+                    .attr("step", "0.1")
+                    .attr("value", "0.0");
+                d3.select("#sliderLabel")
+                    .text("0.0");
+            }
+
+            function drawChart(svg, data, update) {
+                const padding = 30;
+                const timeSpan = 1000;
+                canvas_width = svg.style("width").replace("px", "");
+                canvas_height = svg.style("height").replace("px", "");
+
+                var xScaler = d3.scaleLinear()
+                    .domain([d3.min(data, d => d.x), d3.max(data, d => d.x)])
+                    .range([1.5 * padding, canvas_width - 1.5 * padding]);
+                var yScaler = d3.scaleLinear()
+                    .domain([d3.min(data, d => d.y), d3.max(data, d => d.y)])
+                    .range([canvas_height - 1.5 * padding, 1.5 * padding]);
+                var xAxisFunc = d3.axisBottom().scale(xScaler).tickValues([]);
+                var yAxisFunc = d3.axisLeft().scale(yScaler).tickValues([]);
+
+                // draw/update circles
+                var sel = svg.selectAll("circle").data(data);
+                if (update) {
+                    sel = sel.transition().duration(timeSpan);
+                }
+                else {
+                    sel = sel.enter().append("circle");
+                }
+                sel.attr("cx", d => xScaler(d.x))
+                    .attr("cy", d => yScaler(d.y))
+                    .attr("r", 2)
+                    .attr("fill", function (d) {
+                        if (d.label == 1) {return "red"}
+                        else {return "black"}
+                    });
+
+                // draw/update axis
+                if (update) {
+                    svg.select("g.x.axis").transition().duration(timeSpan)
+                        .call(xAxisFunc);
+                    svg.select("g.y.axis").transition().duration(timeSpan)
+                        .call(yAxisFunc);
+                }
+                else {
+                    var xOffset = canvas_height - padding;
+                    svg.append("g")
+                        .attr("transform", `translate(0, ${xOffset})`)
+                        .call(xAxisFunc);
+                    svg.append("g")
+                        .attr("transform", `translate(${padding}, 0)`)
+                        .call(yAxisFunc);
+                }
+
+                // axis text
+                if (!update) {
+                    var xAxisTextLoc = [canvas_width / 2, canvas_height];
+                    svg.append("text")
+                        .attr("transform",
+                            `translate(${xAxisTextLoc[0]}, ${xAxisTextLoc[1]})`)
+                      .style("text-anchor", "middle")
+                      .text("UMAP 1");
+
+                    var yAxisTextLoc = [0, -canvas_height / 2];
+                    svg.append("text")
+                        .attr("transform", "rotate(-90)")
+                        .attr("x", yAxisTextLoc[1])
+                        .attr("y", yAxisTextLoc[0])
+                    .attr("dy", "1em")
+                      .style("text-anchor", "middle")
+                      .text("UMAP 2");
+                }
+            }
+
+            const dataDirPath = "/md-serve/data";
+            // create menu and populate with WSI id
+            // then set value to first WSI id
+            d3.json(`${dataDirPath}/wsi_list.json`).then(function (wsiList) {
+                createDropDownMenu(wsiList);
+                d3.json(`/md-serve/data/wsi_${wsiList[0]}_fraction_0.0.json`).then(function (data) {
+                    createSlider();
+                    drawChart(d3.select("#chart"), data, false);
+                });
+            });
+
+            // on changing WSI, prepare plot with same fraction if exists
+            d3.select("#dropDown").on("input", function () {
+                const wsiId = this.value;
+                const fraction = parseFloat(d3.select("#slider").node().value).toFixed(1);
+                d3.select("#chart").selectAll("circle").remove();  // remove data points
+                d3.select("#chart").selectAll("g").remove();  // remove axis
+                d3.json(`${dataDirPath}/wsi_${wsiId}_fraction_${fraction}.json`).then(function (data) {
+                    drawChart(d3.select("#chart"), data, false);
+                });
+            });
+
+            // on changing fraction, prepare plot with same WSI
+			d3.select("#slider").on("input", function () {
+                const wsiId = d3.select("#dropDown").node().value;
+                const fraction = parseFloat(this.value).toFixed(1);
+				d3.select("#sliderLabel").text(fraction);
+                d3.json(`${dataDirPath}/wsi_${wsiId}_fraction_${fraction}.json`).then(function (data) {
+                    drawChart(d3.select("#chart"), data, true);
+                });
+			});
+
+		</script>
+	</body>
+</html>
