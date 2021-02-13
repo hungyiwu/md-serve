@@ -2,7 +2,6 @@
 <html>
 	<head>
 		<script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
-		<script src="{{ url_for('static', filename='app.js') }}"></script>
 	</head>
 
 	<body>
@@ -81,6 +80,74 @@
                     drawChart(d3.select("#chart"), data, true);
                 });
 			});
+
+            function drawchart(svg, data, update) {
+                const padding = 30;
+                const timespan = 1000;
+                canvas_width = svg.style("width").replace("px", "");
+                canvas_height = svg.style("height").replace("px", "");
+
+                var xscaler = d3.scalelinear()
+                    .domain([d3.min(data, d => d.x), d3.max(data, d => d.x)])
+                    .range([1.5 * padding, canvas_width - 1.5 * padding]);
+                var yscaler = d3.scalelinear()
+                    .domain([d3.min(data, d => d.y), d3.max(data, d => d.y)])
+                    .range([canvas_height - 1.5 * padding, 1.5 * padding]);
+                var xaxisfunc = d3.axisbottom().scale(xscaler).tickvalues([]);
+                var yaxisfunc = d3.axisleft().scale(yscaler).tickvalues([]);
+
+                // draw/update circles
+                var sel = svg.selectall("circle").data(data);
+                if (update) {
+                    sel = sel.transition().duration(timespan);
+                }
+                else {
+                    sel = sel.enter().append("circle");
+                }
+                sel.attr("cx", d => xscaler(d.x))
+                    .attr("cy", d => yscaler(d.y))
+                    .attr("r", 2)
+                    .attr("fill", function (d) {
+                        if (d.label == 1) {return "red"}
+                        else {return "black"}
+                    });
+
+                // draw/update axis
+                if (update) {
+                    svg.select("g.x.axis").transition().duration(timespan)
+                        .call(xaxisfunc);
+                    svg.select("g.y.axis").transition().duration(timespan)
+                        .call(yaxisfunc);
+                }
+                else {
+                    var xoffset = canvas_height - padding;
+                    svg.append("g")
+                        .attr("transform", `translate(0, ${xoffset})`)
+                        .call(xaxisfunc);
+                    svg.append("g")
+                        .attr("transform", `translate(${padding}, 0)`)
+                        .call(yaxisfunc);
+                }
+
+                // axis text
+                if (!update) {
+                    var xaxistextloc = [canvas_width / 2, canvas_height];
+                    svg.append("text")
+                        .attr("transform",
+                            `translate(${xaxistextloc[0]}, ${xaxistextloc[1]})`)
+                      .style("text-anchor", "middle")
+                      .text("umap 1");
+
+                    var yaxistextloc = [0, -canvas_height / 2];
+                    svg.append("text")
+                        .attr("transform", "rotate(-90)")
+                        .attr("x", yaxistextloc[1])
+                        .attr("y", yAxisTextLoc[0])
+                    .attr("dy", "1em")
+                      .style("text-anchor", "middle")
+                      .text("UMAP 2");
+                }
+            }
 		</script>
 	</body>
 </html>
