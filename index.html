@@ -24,22 +24,16 @@
         </div>
 
 		<script>
+            const dataDirPath = "/md-serve/data";
             // create menu and populate with WSI id
             // then set value to first WSI id
-            d3.json("/md-serve/data/wsi_list.json").then(function (wsiList) {
+            d3.json(`${dataDirPath}/wsi_list.json`).then(function (wsiList) {
                 createDropDownMenu(wsiList);
-            });
-            d3.json("/api/v1/wsi/list").then(
-                function (wsiList) {
-                    createDropDownMenu(wsiList);
-                    d3.json(`/api/v1/wsi/${wsiList[0]}/fraction/list`).then(
-                        function (fractionList) {
-                            createSlider(fractionList);
-                            d3.json(`/api/v1/wsi/${wsiList[0]}/fraction/${fractionList[0]}`).then(
-                                data => {drawChart(d3.select("#chart"), data, false);
-                        });
-                    });
+                d3.json(`/md-serve/data/wsi_${wsiList[0]}_fraction_0.0.json`).then(function (data) {
+                    createSlider();
+                    drawChart(d3.select("#chart"), data, false);
                 });
+            });
 
             function createDropDownMenu(wsiList) {
                 d3.select("#dropDown").selectAll("option")
@@ -52,7 +46,7 @@
                             if (d == wsiList[0]) {return "selected"}});
             }
 
-            function createSlider(fractionList) {
+            function createSlider() {
                 d3.select("#slider")
                     .attr("min", "0.0")
                     .attr("max", "1.0")
@@ -65,11 +59,10 @@
             // on changing WSI, prepare plot with same fraction if exists
             d3.select("#dropDown").on("input", function () {
                 const wsiId = this.value;
-                const fraction = parseFloat(
-                    d3.select("#slider").node().value).toFixed(1);
-                d3.select("#chart").selectAll("circle").remove();
-                d3.select("#chart").selectAll("g").remove();
-                d3.json(`/api/v1/wsi/${wsiId}/fraction/${fraction}`).then(function (data) {
+                const fraction = parseFloat(d3.select("#slider").node().value).toFixed(1);
+                d3.select("#chart").selectAll("circle").remove();  // remove data points
+                d3.select("#chart").selectAll("g").remove();  // remove axis
+                d3.json(`${dataDirPath}/wsi_${wsiId}_fraction_${fraction}.json`).then(function (data) {
                     drawChart(d3.select("#chart"), data, false);
                 });
             });
@@ -79,7 +72,7 @@
                 const wsiId = d3.select("#dropDown").node().value;
                 const fraction = parseFloat(this.value).toFixed(1);
 				d3.select("#sliderLabel").text(fraction);
-                d3.json(`/api/v1/wsi/${wsiId}/fraction/${fraction}`).then(function (data) {
+                d3.json(`${dataDirPath}/wsi_${wsiId}_fraction_${fraction}.json`).then(function (data) {
                     drawChart(d3.select("#chart"), data, true);
                 });
 			});
