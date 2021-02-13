@@ -1,6 +1,6 @@
 function drawChart(svg, data, update) {
-	var padding = 30;
-	var timeSpan = 1000;
+	const padding = 30;
+	const timeSpan = 1000;
 	canvas_width = svg.style("width").replace("px", "");
 	canvas_height = svg.style("height").replace("px", "");
 
@@ -10,8 +10,8 @@ function drawChart(svg, data, update) {
 	var yScaler = d3.scaleLinear()
 		.domain([d3.min(data, d => d.y), d3.max(data, d => d.y)])
 		.range([canvas_height - 1.5 * padding, 1.5 * padding]);
-	var xAxisFunc = d3.axisBottom().scale(xScaler);
-	var yAxisFunc = d3.axisLeft().scale(yScaler);
+	var xAxisFunc = d3.axisBottom().scale(xScaler).tickValues([]);
+	var yAxisFunc = d3.axisLeft().scale(yScaler).tickValues([]);
 
 	// draw/update circles
 	var sel = svg.selectAll("circle").data(data);
@@ -45,4 +45,23 @@ function drawChart(svg, data, update) {
 			.attr("transform", `translate(${padding}, 0)`)
 			.call(yAxisFunc);
 	}
+
+    // axis text
+    if (!update) {
+        var xAxisTextLoc = [canvas_width / 2, canvas_height];
+        svg.append("text")
+            .attr("transform",
+                `translate(${xAxisTextLoc[0]}, ${xAxisTextLoc[1]})`)
+          .style("text-anchor", "middle")
+          .text("UMAP 1");
+
+        var yAxisTextLoc = [0, -canvas_height / 2];
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("x", yAxisTextLoc[1])
+            .attr("y", yAxisTextLoc[0])
+        .attr("dy", "1em")
+          .style("text-anchor", "middle")
+          .text("UMAP 2");
+    }
 }
