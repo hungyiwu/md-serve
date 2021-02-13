@@ -26,6 +26,9 @@
 		<script>
             // create menu and populate with WSI id
             // then set value to first WSI id
+            d3.json("/data/wsi_list.json").then(function (wsiList) {
+                createDropDownMenu(wsiList);
+            });
             d3.json("/api/v1/wsi/list").then(
                 function (wsiList) {
                     createDropDownMenu(wsiList);
