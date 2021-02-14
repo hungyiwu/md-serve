@@ -22,10 +22,56 @@ Initially I had 3 APIs:
 // prepare chart at landing page using first WSI ID of the returned WSI ID list
 // and the frist fraction of that WSI ID
 d3.json("/wsi/list").then(function (wsiList) {
+  createDropDownMenu(wsiList);
+  setDropDownMenuToValue(wsiList[0]);
   d3.json(`/wsi/${wsiList[0]}/fraction/list`).then(function (fractionList) {
+    createSlider(fractionList);
+    setSliderToValue(fractionList[0]);
     d3.json(`/wsi/#{wsiList[0]}/fraction/${fractionList[0]}`).then(function (data) {
       drawChart(d3.select("#chart"), data, false);  // third argument is bool, true when just updating with the same WSI ID
     });
   });
 });
+
+d3.select("#dropDown").on("input", function () {
+  // call API 3 to get data
+});
+
+d3.select("#slider").on("input", function () {
+  // call API 3 to get data
+});
 ```
+
+Another drawback is that the user story includes frequent sliding of the slider; pick one, then switch to other WSIs to confirm the fraction value is generalizable. That API design means one API call per slider action.
+
+I realized it makes the front-end flow easier if there are only two APIs:
+- `GET /wsi/list` returns a list of all available WSI IDs
+- `GET /wsi/<string:wsi_id>` returns data of all fractions
+
+...then the front-end logic becomes:
+
+```
+// prepare chart at landing page using first WSI ID of the returned WSI ID list
+// and the frist fraction of that WSI ID
+d3.json("/wsi/list").then(function (wsiList) {
+  createDropDownMenu(wsiList);
+  setDropDownMenuToValue(wsiList[0]);
+  d3.json(`/wsi/${wsiList[0]}`).then(function (data) {
+    createSlider(data.fraction);
+    setSliderToValue(data.fraction[0]);
+    drawChart(d3.select("#chart"), data.fraction[0], false);  // third argument is bool, true when just updating with the same WSI ID
+    d3.select("#slider").on("input", function () {
+      // reuse the `data` variable
+    });
+  });
+  
+  d3.select("#dropDown").on("input", function () {
+    // call API 2 to get data
+    d3.select("#slider").on("input", function () {
+      // reuse data
+    });
+  });
+});
+```
+
+Now there's one less API call at landing page rendering and only one API call if switching WSI; no API call when sliding.
