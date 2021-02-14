@@ -1,5 +1,9 @@
 # Mixed-distance front-end using D3.js
 
+The final product of this project is an interactive web page at https://hungyiwu.github.io/md-serve/
+
+## Why I made this
+
 This is a side project to practice D3.js. Prior to this point, I have not spent time learning javascript to the productive level. Recent work experience has led me to the realization that javascript is not just about pretty, animated UI, but also about the logic. In addition, to push any service to the client/edge side, javascript is almost inevitable. Picking it up completed my skillset to make a minimal viable product, from the core machine learning, back-end API, to front-end UI, all by myself.
 
 This project focuses at the front-end UI, where the machine learning logic was done in a previous project ([Mixed-distance](https://github.com/hungyiwu/mixed-distance)) and the back-end API was done via GitHub Pages.
